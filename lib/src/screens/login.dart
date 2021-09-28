@@ -1,4 +1,6 @@
+import 'package:crud_users/src/screens/dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -12,6 +14,26 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _user = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
+  late SharedPreferences prefs;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _initPrefs();
+  }
+
+  _initPrefs() async {
+    prefs = await SharedPreferences.getInstance();
+  }
+
+  Future<bool> _logIn(String user, String pass) {
+    bool logged = false;
+    String prefPass = prefs.getString(user) ?? '';
+    if(pass == prefPass) {
+      logged = true;
+    }
+    return Future.value(logged);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +59,6 @@ class _LoginPageState extends State<LoginPage> {
                 Color(0xFF555555),
                 Color(0xFF545455),
               ],
-              stops: [0.1, 0.4, 0.7, 0.9],
             ),
           ),
         ),
@@ -90,18 +111,19 @@ class _LoginPageState extends State<LoginPage> {
                                 return null;
                               },
                               decoration: InputDecoration(
-                                  labelText: 'Usuario',
-                                  labelStyle: TextStyle(color: Colors.black),
+                                  fillColor: Colors.white,
+                                  labelText: 'User',
+                                  labelStyle: TextStyle(color: Colors.white),
                                   focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
-                                        color: Color(0XFFA3854F),
+                                        color: Colors.green,
                                       ),
                                       borderRadius: BorderRadius.circular(30)
                                   ),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                                   focusedErrorBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
-                                        color: Color(0XFFA3854F),
+                                        color: Colors.green,
                                       ),
                                       borderRadius: BorderRadius.circular(30)
                                   )
@@ -125,17 +147,17 @@ class _LoginPageState extends State<LoginPage> {
 
                             decoration: InputDecoration(
                               labelText: 'Contraseña',
-                              labelStyle: TextStyle(color: Colors.black),
+                              labelStyle: TextStyle(color: Colors.white),
                               focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: Color(0XFFA3854F),
+                                    color: Colors.green,
                                   ),
                                   borderRadius: BorderRadius.circular(30)
                               ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                               focusedErrorBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: Color(0XFFA3854F),
+                                    color: Colors.green,
                                   ),
                                   borderRadius: BorderRadius.circular(30)
                               ),
@@ -145,7 +167,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _obscureText
                                       ? Icons.visibility_off
                                       : Icons.visibility,
-                                  color: _obscureText ? Colors.grey : Color(0XFFA3854F),
+                                  color: _obscureText ? Colors.grey : Colors.green,
                                 ),
                                 onPressed: () {
                                   // Update the state i.e. toogle the state of passwordVisible variable
@@ -177,11 +199,20 @@ class _LoginPageState extends State<LoginPage> {
                                     fontSize: 16
                                 ),
                               ),
-                              onPressed: () => {
+                              onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  // If the form is valid, display a snackbar. In the real world,
-                                  // you'd often call a server or save the information in a database.
-                                },
+                                  _logIn(_user.text, _pass.text).then((result) {
+                                    Navigator.of(context)
+                                        .pushReplacement(
+                                        new MaterialPageRoute(
+                                            builder: (context) =>
+                                              Dashboard()
+                                        )
+                                    );
+                                  }).catchError((error) {
+                                    print(error);
+                                  });
+                                }
                               },
                             )
                         ),
