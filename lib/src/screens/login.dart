@@ -1,4 +1,8 @@
+import 'package:crud_users/src/screens/dashboard.dart';
+import 'package:crud_users/src/utils/globals.dart';
+import 'package:crud_users/src/utils/shared_preferences.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -12,6 +16,30 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _user = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _initAdmin();
+  }
+
+  Future<bool> _logIn(String user, String pass) {
+    bool logged = false;
+    String prefPass = SharedPreferencesGlobal.prefs.getString(user) ?? '';
+    print(prefPass);
+    print(pass);
+    if(pass == prefPass) {
+      logged = true;
+      Globals.user = user;
+      Globals.isAdmin = (user == "admin");
+    }
+    return Future.value(logged);
+  }
+
+  _initAdmin() async {
+    SharedPreferencesGlobal.prefs = await SharedPreferences.getInstance();
+    await SharedPreferencesGlobal.prefs.setString('admin', 'admin');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       body: _buildBody(),
     );
   }
+
 
   Widget _buildBody() {
     return Stack(
@@ -37,7 +66,6 @@ class _LoginPageState extends State<LoginPage> {
                 Color(0xFF555555),
                 Color(0xFF545455),
               ],
-              stops: [0.1, 0.4, 0.7, 0.9],
             ),
           ),
         ),
@@ -90,18 +118,19 @@ class _LoginPageState extends State<LoginPage> {
                                 return null;
                               },
                               decoration: InputDecoration(
-                                  labelText: 'Usuario',
-                                  labelStyle: TextStyle(color: Colors.black),
+                                  fillColor: Colors.white,
+                                  labelText: 'User',
+                                  labelStyle: TextStyle(color: Colors.white),
                                   focusedBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
-                                        color: Color(0XFFA3854F),
+                                        color: Colors.green,
                                       ),
                                       borderRadius: BorderRadius.circular(30)
                                   ),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                                   focusedErrorBorder: OutlineInputBorder(
                                       borderSide: BorderSide(
-                                        color: Color(0XFFA3854F),
+                                        color: Colors.green,
                                       ),
                                       borderRadius: BorderRadius.circular(30)
                                   )
@@ -125,17 +154,17 @@ class _LoginPageState extends State<LoginPage> {
 
                             decoration: InputDecoration(
                               labelText: 'Contraseña',
-                              labelStyle: TextStyle(color: Colors.black),
+                              labelStyle: TextStyle(color: Colors.white),
                               focusedBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: Color(0XFFA3854F),
+                                    color: Colors.green,
                                   ),
                                   borderRadius: BorderRadius.circular(30)
                               ),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
                               focusedErrorBorder: OutlineInputBorder(
                                   borderSide: BorderSide(
-                                    color: Color(0XFFA3854F),
+                                    color: Colors.green,
                                   ),
                                   borderRadius: BorderRadius.circular(30)
                               ),
@@ -145,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                                   _obscureText
                                       ? Icons.visibility_off
                                       : Icons.visibility,
-                                  color: _obscureText ? Colors.grey : Color(0XFFA3854F),
+                                  color: _obscureText ? Colors.grey : Colors.green,
                                 ),
                                 onPressed: () {
                                   // Update the state i.e. toogle the state of passwordVisible variable
@@ -177,11 +206,31 @@ class _LoginPageState extends State<LoginPage> {
                                     fontSize: 16
                                 ),
                               ),
-                              onPressed: () => {
+                              onPressed: () {
                                 if (_formKey.currentState!.validate()) {
-                                  // If the form is valid, display a snackbar. In the real world,
-                                  // you'd often call a server or save the information in a database.
-                                },
+                                  _logIn(_user.text, _pass.text).then((result) {
+                                    if(result) {
+                                      Navigator.of(context)
+                                          .push(
+                                          new MaterialPageRoute(
+                                              builder: (context) =>
+                                                  Dashboard()
+                                          )
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                "Credenciales incorrectas"
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          )
+                                      );
+                                    }
+                                  }).catchError((error) {
+                                    print(error);
+                                  });
+                                }
                               },
                             )
                         ),

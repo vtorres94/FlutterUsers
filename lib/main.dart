@@ -1,8 +1,9 @@
 import 'package:crud_users/src/screens/login.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-void main() {
-  runApp(MyApp());
+void main() async {
+  runApp(GetMaterialApp(home:MyApp()));
 }
 
 class MyApp extends StatelessWidget {
@@ -13,4 +14,5 @@ class MyApp extends StatelessWidget {
       home: LoginPage(),
     );
   }
+
 }
