@@ -1,4 +1,6 @@
 import 'package:crud_users/src/screens/dashboard.dart';
+import 'package:crud_users/src/utils/globals.dart';
+import 'package:crud_users/src/utils/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,25 +16,29 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _user = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _obscureText = true;
-  late SharedPreferences prefs;
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
-    _initPrefs();
-  }
-
-  _initPrefs() async {
-    prefs = await SharedPreferences.getInstance();
+    _initAdmin();
   }
 
   Future<bool> _logIn(String user, String pass) {
     bool logged = false;
-    String prefPass = prefs.getString(user) ?? '';
+    String prefPass = SharedPreferencesGlobal.prefs.getString(user) ?? '';
+    print(prefPass);
+    print(pass);
     if(pass == prefPass) {
       logged = true;
+      Globals.user = user;
+      Globals.isAdmin = (user == "admin");
     }
     return Future.value(logged);
+  }
+
+  _initAdmin() async {
+    SharedPreferencesGlobal.prefs = await SharedPreferences.getInstance();
+    await SharedPreferencesGlobal.prefs.setString('admin', 'admin');
   }
 
   @override
@@ -41,6 +47,7 @@ class _LoginPageState extends State<LoginPage> {
       body: _buildBody(),
     );
   }
+
 
   Widget _buildBody() {
     return Stack(
@@ -202,13 +209,24 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: () {
                                 if (_formKey.currentState!.validate()) {
                                   _logIn(_user.text, _pass.text).then((result) {
-                                    Navigator.of(context)
-                                        .pushReplacement(
-                                        new MaterialPageRoute(
-                                            builder: (context) =>
-                                              Dashboard()
-                                        )
-                                    );
+                                    if(result) {
+                                      Navigator.of(context)
+                                          .push(
+                                          new MaterialPageRoute(
+                                              builder: (context) =>
+                                                  Dashboard()
+                                          )
+                                      );
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                                "Credenciales incorrectas"
+                                            ),
+                                            backgroundColor: Colors.red,
+                                          )
+                                      );
+                                    }
                                   }).catchError((error) {
                                     print(error);
                                   });
